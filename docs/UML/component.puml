@@ -1,0 +1,19 @@
+@startuml
+skinparam componentStyle rectangle
+actor Browser
+component "Веб-интерфейс\nHTML / CSS / JavaScript" as UI
+component "Spring MVC\nControllers" as C
+component "DTO + Validation" as DTO
+component "Service Layer" as S
+component "Spring Data JPA\nRepositories" as R
+component "Spring Security\nSecurityConfig" as SEC
+database "SQLite" as DB
+Browser --> UI
+UI --> SEC : HTTP session / CSRF
+UI --> C : REST API
+C --> DTO
+C --> S
+S --> R
+R --> DB
+SEC ..> C : authorization
+@enduml
