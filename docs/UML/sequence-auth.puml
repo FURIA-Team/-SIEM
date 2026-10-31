@@ -1,0 +1,18 @@
+@startuml
+actor Пользователь
+participant "Браузер" as Browser
+participant "AuthController" as Controller
+participant "Spring Security" as Security
+participant "AuthService" as Service
+database "SQLite / Repositories" as DB
+Пользователь -> Browser : Вводит логин и пароль
+Browser -> Controller : POST /api/auth/login
+Controller -> Service : authenticate(identifier, password)
+Service -> Security : AuthenticationManager.authenticate()
+Security -> DB : Поиск пользователя
+DB --> Security : User / password hash / role
+Security --> Service : Authentication
+Service -> DB : Обновить lastLoginAt, записать журнал
+Service --> Controller : Authentication
+Controller --> Browser : Успешный ответ и сессия
+@enduml
