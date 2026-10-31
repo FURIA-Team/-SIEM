@@ -1,0 +1,59 @@
+@startuml
+hide circle
+skinparam linetype ortho
+entity users {
+  * id : BIGINT
+  --
+  username : VARCHAR
+  email : VARCHAR
+  password : VARCHAR
+  role : VARCHAR
+  created_at : DATETIME
+  last_login_at : DATETIME
+}
+entity security_events {
+  * id : BIGINT
+  --
+  title : VARCHAR
+  severity : VARCHAR
+  source : VARCHAR
+  destination : VARCHAR
+  status : VARCHAR
+  occurred_at : DATETIME
+  details : TEXT
+  submitted_by : VARCHAR
+}
+entity security_alerts {
+  * id : BIGINT
+  --
+  event_id : BIGINT <<unique>>
+  title : VARCHAR
+  severity : VARCHAR
+  source : VARCHAR
+  status : VARCHAR
+  detected_at : DATETIME
+  details : TEXT
+}
+entity system_logs {
+  * id : BIGINT
+  --
+  level : VARCHAR
+  category : VARCHAR
+  message : VARCHAR
+  actor : VARCHAR
+  created_at : DATETIME
+}
+entity system_settings {
+  * id : BIGINT
+  --
+  workspace_name : VARCHAR
+  timezone : VARCHAR
+  retention_days : INTEGER
+  updated_at : DATETIME
+}
+security_events ||--o| security_alerts : event_id (logical reference)
+note right of security_alerts
+  event_id is a unique scalar field.
+  No JPA @OneToOne mapping is declared.
+end note
+@enduml
