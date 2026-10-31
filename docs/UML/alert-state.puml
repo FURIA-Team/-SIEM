@@ -1,0 +1,7 @@
+@startuml
+[*] --> OPEN : предупреждение создано
+OPEN --> INVESTIGATING : начать расследование
+INVESTIGATING --> RESOLVED : устранено / закрыто
+OPEN --> RESOLVED : закрыть
+RESOLVED --> [*]
+@enduml
