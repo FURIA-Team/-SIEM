@@ -1,0 +1,46 @@
+@startuml
+skinparam classAttributeIconSize 0
+package "controller" {
+ class AuthController
+ class SecurityOperationsController
+ class HomeController
+}
+package "service" {
+ class AuthService
+ class SecurityOperationsService
+}
+package "repository" {
+ interface UserRepository
+ interface SecurityEventRepository
+ interface SecurityAlertRepository
+ interface SystemLogRepository
+ interface SystemSettingsRepository
+}
+package "entity" {
+ class User
+ class SecurityEvent
+ class SecurityAlert
+ class SystemLog
+ class SystemSettings
+}
+class SecurityConfig
+AuthController --> AuthService
+SecurityOperationsController --> SecurityOperationsService
+AuthService --> UserRepository
+AuthService --> SystemLogRepository
+SecurityOperationsService --> UserRepository
+SecurityOperationsService --> SecurityEventRepository
+SecurityOperationsService --> SecurityAlertRepository
+SecurityOperationsService --> SystemLogRepository
+SecurityOperationsService --> SystemSettingsRepository
+UserRepository ..> User
+SecurityEventRepository ..> SecurityEvent
+SecurityAlertRepository ..> SecurityAlert
+SystemLogRepository ..> SystemLog
+SystemSettingsRepository ..> SystemSettings
+SecurityAlert --> "eventId: Long" SecurityEvent : logical reference
+note on link
+  Unique eventId field;
+  not a JPA association.
+end note
+@enduml
