@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+actor "Пользователь" as User
+actor "Администратор" as Admin
+Admin --|> User
+rectangle MiniSIEM {
+  usecase "Войти / выйти" as UC1
+  usecase "Просмотреть панель" as UC2
+  usecase "Создать событие" as UC3
+  usecase "Искать и фильтровать события" as UC4
+  usecase "Экспортировать CSV" as UC5
+  usecase "Просмотреть предупреждения" as UC6
+  usecase "Изменить статус предупреждения" as UC7
+  usecase "Просмотреть системные журналы" as UC8
+  usecase "Управлять пользователями" as UC9
+  usecase "Изменить настройки" as UC10
+}
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+Admin --> UC9
+Admin --> UC10
+@enduml

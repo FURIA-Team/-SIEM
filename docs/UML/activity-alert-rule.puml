@@ -1,0 +1,14 @@
+@startuml
+start
+:Получить запрос на создание события;
+:Проверить сессию, CSRF и данные;
+:Сохранить SecurityEvent;
+if (severity = HIGH или CRITICAL?) then (Да)
+  :Создать SecurityAlert;
+  :Связать через уникальный eventId;
+else (Нет)
+  :Не создавать автоматическое предупреждение;
+endif
+:Вернуть ответ API;
+stop
+@enduml
