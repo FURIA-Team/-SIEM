@@ -1,19 +1,19 @@
 @startuml
 skinparam componentStyle rectangle
-actor Browser
+actor "Браузер"
 component "Веб-интерфейс\nHTML / CSS / JavaScript" as UI
-component "Spring MVC\nControllers" as C
-component "DTO + Validation" as DTO
-component "Service Layer" as S
-component "Spring Data JPA\nRepositories" as R
+component "Spring MVC\nКонтроллерлер" as C
+component "DTO + деректерді тексеру" as DTO
+component "Сервис қабаты" as S
+component "Spring Data JPA\nРепозиторийлер" as R
 component "Spring Security\nSecurityConfig" as SEC
 database "SQLite" as DB
-Browser --> UI
-UI --> SEC : HTTP session / CSRF
+"Браузер" --> UI
+UI --> SEC : HTTP сессия / CSRF
 UI --> C : REST API
 C --> DTO
 C --> S
 S --> R
 R --> DB
-SEC ..> C : authorization
+SEC ..> C : қолжетімділікті тексеру
 @enduml
