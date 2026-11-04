@@ -1,20 +1,20 @@
-# Архитектура MiniSIEM
+# MiniSIEM жүйесінің архитектурасы
 
-## Общая схема
-MiniSIEM — монолитное серверное веб-приложение. Браузер взаимодействует с сервером по HTTP; REST API обрабатывает запросы, сервисный слой выполняет бизнес-операции, репозитории обращаются к SQLite через Spring Data JPA и Hibernate.
+## Жалпы сызба
+MiniSIEM — монолитті серверлік веб-қосымша. Браузер сервермен HTTP арқылы байланысады; REST API сұраныстарды өңдейді, сервис қабаты бизнес-операцияларды орындайды, ал репозиторийлер Spring Data JPA және Hibernate арқылы SQLite дерекқорына жүгінеді.
 
-## Логические слои
+## Логикалық қабаттар
 
-| Слой | Компоненты | Ответственность |
+| Қабат | Құрамдастар | Міндеті |
 |---|---|---|
-| Представление | HTML, CSS, JavaScript | Отображение страниц и вызов API |
-| Контроллеры | AuthController, SecurityOperationsController, HomeController | HTTP-маршруты и ответы |
-| DTO | LoginRequest, RegisterRequest, EventRequest и другие | Формат входных и выходных данных |
-| Сервисы | AuthService, SecurityOperationsService | Бизнес-логика |
-| Репозитории | UserRepository, SecurityEventRepository и другие | Доступ к данным через JPA |
-| Сущности | User, SecurityEvent, SecurityAlert, SystemLog, SystemSettings | Модель хранения |
-| Безопасность | SecurityConfig | Сессии, CSRF, аутентификация и авторизация |
-| Хранилище | SQLite | Постоянное хранение |
+| Көрсету қабаты | HTML, CSS, JavaScript | Беттерді көрсету және API шақыру |
+| Контроллерлер | AuthController, SecurityOperationsController, HomeController | HTTP маршруттары мен жауаптары |
+| DTO | LoginRequest, RegisterRequest, EventRequest және басқалары | Кіріс және шығыс деректерінің пішімі |
+| Сервистер | AuthService, SecurityOperationsService | Бизнес-логика |
+| Репозиторийлер | UserRepository, SecurityEventRepository және басқалары | JPA арқылы деректерге қол жеткізу |
+| Нысандар | User, SecurityEvent, SecurityAlert, SystemLog, SystemSettings | Деректерді сақтау моделі |
+| Қауіпсіздік | SecurityConfig | Сессиялар, CSRF, аутентификация және авторизация |
+| Дерекқор | SQLite | Деректерді тұрақты сақтау |
 
 ## REST API
 
@@ -26,7 +26,7 @@ MiniSIEM — монолитное серверное веб-приложение
 - POST `/api/auth/bootstrap-admin`
 - GET `/api/auth/me`
 
-### Пользовательские операции (USER и ADMIN)
+### Пайдаланушы операциялары (USER және ADMIN)
 - GET `/api/user/dashboard`
 - GET `/api/user/events`
 - GET `/api/user/events/export`
@@ -36,24 +36,24 @@ MiniSIEM — монолитное серверное веб-приложение
 - PATCH `/api/user/alerts/{id}`
 - GET `/api/user/logs`
 
-### Административные операции (ADMIN)
+### Әкімшілік операциялар (ADMIN)
 - GET, POST `/api/admin/users`
 - DELETE `/api/admin/users/{id}`
 - GET, PUT `/api/admin/settings`
 
-## Обработка события
-1. Клиент отправляет POST `/api/user/events` с обязательными полями `title`, `severity`, `source`, `destination`.
-2. Spring Security проверяет сессию, роль и CSRF-токен.
-3. Контроллер валидирует запрос и передаёт его в `SecurityOperationsService`.
-4. Сервис сохраняет `SecurityEvent`.
-5. Для `HIGH` или `CRITICAL` создаётся `SecurityAlert`.
-6. Клиент получает DTO с результатом операции.
+## Оқиғаны өңдеу
+1. Клиент міндетті `title`, `severity`, `source`, `destination` өрістері бар POST `/api/user/events` сұранысын жібереді.
+2. Spring Security сессияны, рөлді және CSRF токенін тексереді.
+3. Контроллер сұранысты тексеріп, `SecurityOperationsService` сервисіне береді.
+4. Сервис `SecurityEvent` нысанын сақтайды.
+5. `HIGH` немесе `CRITICAL` деңгейлері үшін `SecurityAlert` жасалады.
+6. Клиент операция нәтижесі бар DTO алады.
 
-## Модель хранения
-Используются таблицы `users`, `security_events`, `security_alerts`, `system_logs`, `system_settings`. Предупреждение ссылается на событие через уникальное поле `event_id`. В коде это поле-идентификатор, а не ORM-связь JPA.
+## Деректерді сақтау моделі
+`users`, `security_events`, `security_alerts`, `system_logs`, `system_settings` кестелері қолданылады. Ескерту оқиғамен бірегей `event_id` өрісі арқылы байланысады. Кодта бұл өріс идентификатор болып табылады, JPA ORM байланысы емес.
 
-## Ограничения
-- События поступают через REST API; сбор с конечных устройств агентами не подтверждён.
-- Правило предупреждения основано на критичности, а не на сложной корреляции.
-- `retentionDays` хранится как настройка; автоматическое удаление старых записей не подтверждено.
-- SQLite используется как локальное хранилище учебного прототипа.
+## Шектеулер
+- Оқиғалар REST API арқылы қабылданады; соңғы құрылғылардан агенттермен жинау расталмаған.
+- Ескерту ережесі күрделі корреляцияға емес, қауіптілік деңгейіне негізделген.
+- `retentionDays` баптау ретінде сақталады; ескі жазбаларды автоматты жою расталмаған.
+- Оқу прототипінің жергілікті дерекқоры ретінде SQLite қолданылады.
