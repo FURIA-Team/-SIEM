@@ -1,20 +1,20 @@
 @startuml
-actor Пользователь
-participant "Браузер / API-клиент" as Client
+actor Пайдаланушы
+participant "Браузер / API клиенті" as Client
 participant "Spring Security" as Security
 participant "SecurityOperationsController" as Controller
 participant "SecurityOperationsService" as Service
 database "SQLite" as DB
-Пользователь -> Client : Отправить событие
+Пайдаланушы -> Client : Оқиғаны жіберу
 Client -> Security : POST /api/user/events + session + CSRF
-Security -> Security : Проверка сессии, роли, CSRF
-Security -> Controller : Передать запрос
+Security -> Security : Сессияны, рөлді, CSRF тексеру
+Security -> Controller : Сұранысты беру
 Controller -> Service : createEvent(request, actor)
-Service -> DB : Сохранить SecurityEvent
-alt severity = HIGH или CRITICAL
-  Service -> DB : Сохранить SecurityAlert(eventId)
-else severity = MEDIUM или LOW
-  Service -> Service : Не создавать автоматическое предупреждение
+Service -> DB : SecurityEvent сақтау
+alt severity = HIGH немесе CRITICAL
+  Service -> DB : SecurityAlert(eventId) сақтау
+else severity = MEDIUM немесе LOW
+  Service -> Service : Автоматты ескерту жасамау
 end
 Service --> Controller : EventResponse
 Controller --> Client : HTTP 201 + JSON
