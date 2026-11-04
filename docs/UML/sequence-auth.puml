@@ -1,18 +1,18 @@
 @startuml
-actor Пользователь
+actor Пайдаланушы
 participant "Браузер" as Browser
 participant "AuthController" as Controller
 participant "Spring Security" as Security
 participant "AuthService" as Service
-database "SQLite / Repositories" as DB
-Пользователь -> Browser : Вводит логин и пароль
+database "SQLite / репозиторийлер" as DB
+Пайдаланушы -> Browser : Логин мен парольді енгізу
 Browser -> Controller : POST /api/auth/login
 Controller -> Service : authenticate(identifier, password)
 Service -> Security : AuthenticationManager.authenticate()
-Security -> DB : Поиск пользователя
-DB --> Security : User / password hash / role
+Security -> DB : Пайдаланушыны іздеу
+DB --> Security : User / пароль хеші / рөл
 Security --> Service : Authentication
-Service -> DB : Обновить lastLoginAt, записать журнал
+Service -> DB : lastLoginAt жаңарту, журналға жазу
 Service --> Controller : Authentication
-Controller --> Browser : Успешный ответ и сессия
+Controller --> Browser : Сәтті жауап және сессия
 @enduml
