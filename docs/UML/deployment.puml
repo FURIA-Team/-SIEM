@@ -1,13 +1,13 @@
 @startuml
-node "Компьютер пользователя" {
+node "Пайдаланушы компьютері" {
   artifact "Веб-браузер"
 }
-node "Компьютер / сервер приложения" {
+node "Қосымша компьютері / сервері" {
   artifact "MiniSIEM Spring Boot"
   component "Java 25 Runtime"
-  database "SQLite file\nminisiem.db"
+  database "SQLite файлы\nminisiem.db"
 }
 "Веб-браузер" --> "MiniSIEM Spring Boot" : HTTP / localhost:8080
 "MiniSIEM Spring Boot" --> "Java 25 Runtime"
-"MiniSIEM Spring Boot" --> "SQLite file\nminisiem.db" : JDBC
+"MiniSIEM Spring Boot" --> "SQLite файлы\nminisiem.db" : JDBC
 @enduml
