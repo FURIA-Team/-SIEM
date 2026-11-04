@@ -1,22 +1,22 @@
 @startuml
 skinparam classAttributeIconSize 0
-package "controller" {
+package "контроллер" {
  class AuthController
  class SecurityOperationsController
  class HomeController
 }
-package "service" {
+package "сервис" {
  class AuthService
  class SecurityOperationsService
 }
-package "repository" {
+package "репозиторий" {
  interface UserRepository
  interface SecurityEventRepository
  interface SecurityAlertRepository
  interface SystemLogRepository
  interface SystemSettingsRepository
 }
-package "entity" {
+package "нысан" {
  class User
  class SecurityEvent
  class SecurityAlert
@@ -38,9 +38,9 @@ SecurityEventRepository ..> SecurityEvent
 SecurityAlertRepository ..> SecurityAlert
 SystemLogRepository ..> SystemLog
 SystemSettingsRepository ..> SystemSettings
-SecurityAlert --> "eventId: Long" SecurityEvent : logical reference
+SecurityAlert --> "eventId: Long" SecurityEvent : логикалық сілтеме
 note on link
-  Unique eventId field;
-  not a JPA association.
+  Бірегей eventId өрісі;
+  JPA байланысы емес.
 end note
 @enduml
