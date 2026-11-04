@@ -51,9 +51,9 @@ entity system_settings {
   retention_days : INTEGER
   updated_at : DATETIME
 }
-security_events ||--o| security_alerts : event_id (logical reference)
+security_events ||--o| security_alerts : event_id (логикалық байланыс)
 note right of security_alerts
-  event_id is a unique scalar field.
-  No JPA @OneToOne mapping is declared.
+  event_id — бірегей скаляр өріс.
+  JPA @OneToOne байланысы жарияланбаған.
 end note
 @enduml
