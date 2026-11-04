@@ -1,14 +1,14 @@
 @startuml
 start
-:Получить запрос на создание события;
-:Проверить сессию, CSRF и данные;
-:Сохранить SecurityEvent;
-if (severity = HIGH или CRITICAL?) then (Да)
-  :Создать SecurityAlert;
-  :Связать через уникальный eventId;
-else (Нет)
-  :Не создавать автоматическое предупреждение;
+:Оқиға жасау сұранысын алу;
+:Сессияны, CSRF токенін және деректерді тексеру;
+:SecurityEvent сақтау;
+if (severity = HIGH немесе CRITICAL?) then (Иә)
+  :SecurityAlert жасау;
+  :Бірегей eventId арқылы байланыстыру;
+else (Жоқ)
+  :Автоматты ескерту жасамау;
 endif
-:Вернуть ответ API;
+:API жауабын қайтару;
 stop
 @enduml
