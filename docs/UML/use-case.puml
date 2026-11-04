@@ -1,19 +1,19 @@
 @startuml
 left to right direction
-actor "Пользователь" as User
-actor "Администратор" as Admin
+actor "Пайдаланушы" as User
+actor "Әкімші" as Admin
 Admin --|> User
 rectangle MiniSIEM {
-  usecase "Войти / выйти" as UC1
-  usecase "Просмотреть панель" as UC2
-  usecase "Создать событие" as UC3
-  usecase "Искать и фильтровать события" as UC4
-  usecase "Экспортировать CSV" as UC5
-  usecase "Просмотреть предупреждения" as UC6
-  usecase "Изменить статус предупреждения" as UC7
-  usecase "Просмотреть системные журналы" as UC8
-  usecase "Управлять пользователями" as UC9
-  usecase "Изменить настройки" as UC10
+  usecase "Жүйеге кіру / шығу" as UC1
+  usecase "Бақылау панелін қарау" as UC2
+  usecase "Оқиға жасау" as UC3
+  usecase "Оқиғаларды іздеу және сүзу" as UC4
+  usecase "CSV форматына экспорттау" as UC5
+  usecase "Ескертулерді қарау" as UC6
+  usecase "Ескерту күйін өзгерту" as UC7
+  usecase "Жүйелік журналдарды қарау" as UC8
+  usecase "Пайдаланушыларды басқару" as UC9
+  usecase "Баптауларды өзгерту" as UC10
 }
 User --> UC1
 User --> UC2
