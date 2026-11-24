@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0e14">
+  <meta name="description" content="MiniSIEM security operations dashboard">
+  <title>MiniSIEM — Security overview</title>
+  <script src="/app.js" defer></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0e14;
+      --panel: #10161f;
+      --panel-raised: #141c27;
+      --panel-hover: #192330;
+      --border: #202b38;
+      --text: #e8edf4;
+      --muted: #8290a2;
+      --subtle: #596779;
+      --green: #39d6a0;
+      --red: #ff6577;
+      --amber: #ffbd5c;
+      --blue: #69aaff;
+      --purple: #a88bff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; min-width: 320px; background: var(--bg); color: var(--text); }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    .app { min-height: 100vh; }
+
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 20;
+      display: flex;
+      width: 248px;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: #0d1219;
+      padding: 25px 16px 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 29px; }
+    .brand-mark {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid rgba(57, 214, 160, .28);
+      border-radius: 10px;
+      background: rgba(57, 214, 160, .1);
+      color: var(--green);
+    }
+    .brand-name { font-size: 16px; font-weight: 720; letter-spacing: -.5px; }
+    .brand-name span { color: var(--green); }
+    .workspace-label, .nav-label {
+      padding: 0 11px;
+      color: var(--subtle);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: 1.15px;
+      text-transform: uppercase;
+    }
+    .workspace {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 9px 0 28px;
+      padding: 10px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #111821;
+      color: #cbd4df;
+      font-size: 12px;
+    }
+    .workspace-name { display: flex; align-items: center; gap: 9px; }
+    .workspace-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 9px rgba(57, 214, 160, .5); }
+    .nav-label { margin-bottom: 10px; }
+    .nav-list { display: grid; gap: 4px; }
+    .nav-link {
+      display: flex;
+      min-height: 42px;
+      align-items: center;
+      gap: 12px;
+      padding: 0 11px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: #94a1b1;
+      font-size: 13px;
+      transition: background .15s ease, color .15s ease, border-color .15s ease;
+    }
+    .nav-link:hover { background: #151d27; color: var(--text); }
+    .nav-link.active { border-color: rgba(57, 214, 160, .12); background: rgba(57, 214, 160, .09); color: #70e4bb; }
+    .nav-link svg { width: 17px; height: 17px; flex: none; }
+    .nav-count {
+      margin-left: auto;
+      border-radius: 5px;
+      background: rgba(255, 101, 119, .12);
+      padding: 2px 6px;
+      color: #ff8491;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .sidebar-bottom { margin-top: auto; }
+    .sidebar-status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 4px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #101720;
+      padding: 11px;
+      color: #a9b5c3;
+      font-size: 11px;
+    }
+    .status-pulse { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .status-pulse::after { position: absolute; inset: -4px; border: 1px solid rgba(57, 214, 160, .35); border-radius: 50%; content: ""; }
+    .profile { display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); padding: 15px 6px 1px; }
+    .avatar { display: grid; width: 33px; height: 33px; flex: none; place-items: center; border: 1px solid #354763; border-radius: 50%; background: #1d2b40; color: #9dc1ff; font-size: 11px; font-weight: 700; }
+    .profile-name { font-size: 12px; font-weight: 650; }
+    .profile-role { margin-top: 3px; color: var(--muted); font-size: 10px; }
+
+    .main { min-height: 100vh; margin-left: 248px; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      height: 66px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 14, 20, .92);
+      padding: 0 34px;
+      backdrop-filter: blur(14px);
+    }
+    .breadcrumbs { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+    .breadcrumbs strong { color: #dce4ec; font-weight: 600; }
+    .top-actions { display: flex; align-items: center; gap: 12px; }
+    .search {
+      display: flex;
+      width: 208px;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #10161f;
+      padding: 7px 10px;
+      color: var(--muted);
+    }
+    .search svg { width: 15px; height: 15px; flex: none; }
+    .search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 11px; }
+    .search input::placeholder { color: #687587; }
+    .icon-button, .mobile-menu {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #10161f;
+      color: #a6b1bf;
+      cursor: pointer;
+    }
+    .icon-button:hover, .mobile-menu:hover { border-color: #3a4858; color: white; }
+    .icon-button svg, .mobile-menu svg { width: 16px; height: 16px; }
+    .notification-wrap { position: relative; }
+    .notification-dot { position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border: 1px solid var(--bg); border-radius: 50%; background: var(--red); }
+    .mobile-menu { display: none; }
+
+    .content { width: min(1440px, 100%); margin: 0 auto; padding: 31px 34px 40px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 25px; }
+    .eyebrow { margin-bottom: 7px; color: var(--green); font-size: 10px; font-weight: 750; letter-spacing: 1.15px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(24px, 2.4vw, 29px); font-weight: 650; letter-spacing: -.8px; }
+    .subtitle { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+    .heading-actions { display: flex; align-items: center; gap: 10px; }
+    .date-range, .button-secondary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #111821;
+      padding: 9px 11px;
+      color: #b7c1ce;
+      font-size: 11px;
+    }
+    .date-range svg, .button-secondary svg { width: 14px; height: 14px; }
+    .button-secondary { cursor: pointer; transition: background .15s ease; }
+    .button-secondary:hover { background: var(--panel-hover); }
+
+    .overview-strip { display: flex; align-items: center; gap: 8px; margin: 0 0 18px; color: var(--muted); font-size: 11px; }
+    .overview-strip .status-pulse { width: 6px; height: 6px; }
+    .overview-strip strong { color: #c8d2dc; font-weight: 550; }
+    .dot-separator { color: #445162; }
+    .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .metric-card, .panel { border: 1px solid var(--border); border-radius: 9px; background: var(--panel); }
+    .metric-card { min-height: 137px; padding: 17px 17px 14px; }
+    .metric-top { display: flex; align-items: center; justify-content: space-between; }
+    .metric-label { color: #a0adbc; font-size: 11px; font-weight: 550; }
+    .metric-icon { display: grid; width: 29px; height: 29px; place-items: center; border-radius: 7px; }
+    .metric-icon svg { width: 15px; height: 15px; }
+    .metric-icon.green { background: rgba(57, 214, 160, .1); color: var(--green); }
+    .metric-icon.red { background: rgba(255, 101, 119, .1); color: var(--red); }
+    .metric-icon.blue { background: rgba(105, 170, 255, .11); color: var(--blue); }
+    .metric-icon.amber { background: rgba(255, 189, 92, .1); color: var(--amber); }
+    .metric-value { margin-top: 11px; font-size: 27px; font-weight: 680; letter-spacing: -.9px; line-height: 1; }
+    .metric-foot { display: flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--muted); font-size: 10px; }
+    .trend { font-weight: 650; }
+    .trend.up { color: var(--green); }
+    .trend.down { color: var(--red); }
+    .trend.neutral { color: #b4bfcc; }
+
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(275px, .92fr); gap: 14px; margin-top: 16px; }
+    .panel { min-width: 0; }
+    .panel-header { display: flex; min-height: 57px; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); padding: 0 17px; }
+    .panel-title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 650; }
+    .panel-title .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px rgba(57, 214, 160, .35); }
+    .panel-subtitle { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .chart-legend { display: flex; align-items: center; gap: 13px; color: var(--muted); font-size: 9px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-swatch { width: 7px; height: 7px; border-radius: 2px; background: var(--green); }
+    .legend-swatch.blue { background: var(--blue); }
+    .chart-range { display: flex; gap: 2px; border: 1px solid var(--border); border-radius: 6px; background: #0d131b; padding: 3px; }
+    .range-button { border: 0; border-radius: 4px; background: transparent; padding: 4px 7px; color: var(--muted); font-size: 9px; cursor: pointer; }
+    .range-button.selected { background: #202b37; color: #dce5ed; }
+    .chart-area { position: relative; padding: 16px 16px 10px 12px; }
+    .chart-svg { display: block; width: 100%; height: 188px; overflow: visible; }
+    .chart-tooltip {
+      position: absolute;
+      z-index: 2;
+      display: none;
+      border: 1px solid #344355;
+      border-radius: 6px;
+      background: #1b2531;
+      padding: 7px 9px;
+      color: #dce5ed;
+      font-size: 10px;
+      pointer-events: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+    }
+    .chart-footer { display: flex; justify-content: space-between; border-top: 1px solid rgba(32, 43, 56, .7); padding: 11px 17px 13px; color: var(--muted); font-size: 10px; }
+    .chart-footer strong { color: #cbd5df; font-weight: 600; }
+
+    .alerts-list { padding: 2px 16px 5px; }
+    .alert-row { display: flex; align-items: flex-start; gap: 10px; border-bottom: 1px solid rgba(32, 43, 56, .75); padding: 13px 0; }
+    .alert-row:last-child { border-bottom: 0; }
+    .severity-mark { width: 7px; height: 7px; flex: none; margin-top: 4px; border-radius: 2px; background: var(--red); box-shadow: 0 0 9px rgba(255, 101, 119, .23); }
+    .severity-mark.medium { background: var(--amber); box-shadow: 0 0 9px rgba(255, 189, 92, .2); }
+    .severity-mark.low { background: var(--blue); box-shadow: 0 0 9px rgba(105, 170, 255, .2); }
+    .alert-copy { min-width: 0; flex: 1; }
+    .alert-name { overflow: hidden; color: #d5dde6; font-size: 10px; font-weight: 580; text-overflow: ellipsis; white-space: nowrap; }
+    .alert-meta { margin-top: 5px; color: var(--muted); font-size: 9px; }
+    .alert-time { flex: none; color: #8491a1; font-size: 9px; }
+    .panel-link { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; padding: 0; color: #73dcb7; font-size: 10px; cursor: pointer; }
+    .panel-link:hover { color: #a2f1d3; }
+    .panel-link svg { width: 12px; height: 12px; }
+
+    .events-panel { margin-top: 14px; }
+    .events-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .events-tools { display: flex; align-items: center; gap: 13px; }
+    .filter-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; }
+    .filter-label svg { width: 13px; height: 13px; }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+    thead { background: #111821; }
+    th { height: 34px; padding: 0 16px; color: #718094; font-size: 9px; font-weight: 650; letter-spacing: .45px; text-transform: uppercase; }
+    td { height: 43px; border-top: 1px solid rgba(32, 43, 56, .68); padding: 0 16px; color: #b8c3d0; font-size: 10px; }
+    tbody tr:hover { background: #141c26; }
+    .time-cell { color: #8997a8; font-variant-numeric: tabular-nums; }
+    .event-title { display: flex; align-items: center; gap: 8px; color: #d6dee7; font-weight: 550; }
+    .event-icon { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 5px; background: rgba(255, 101, 119, .09); color: #ff7b8a; }
+    .event-icon svg { width: 12px; height: 12px; }
+    .event-icon.warning { background: rgba(255, 189, 92, .09); color: var(--amber); }
+    .event-icon.info { background: rgba(105, 170, 255, .1); color: var(--blue); }
+    .severity-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 4px; padding: 4px 7px; font-size: 9px; font-weight: 650; }
+    .severity-pill::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+    .severity-pill.critical { background: rgba(255, 101, 119, .1); color: #ff7887; }
+    .severity-pill.high { background: rgba(255, 146, 92, .1); color: #ff9a68; }
+    .severity-pill.medium { background: rgba(255, 189, 92, .1); color: #ffc66e; }
+    .severity-pill.low { background: rgba(105, 170, 255, .1); color: #80b5ff; }
+    .source-cell { color: #8997a8; }
+    .table-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding: 11px 16px; color: var(--muted); font-size: 10px; }
+    .pagination { display: flex; align-items: center; gap: 5px; }
+    .page-button { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--muted); font-size: 10px; cursor: pointer; }
+    .page-button.current { border-color: #304050; background: #1a2531; color: #dce5ed; }
+    .page-button svg { width: 12px; height: 12px; }
+    .no-results { display: none; padding: 22px; color: var(--muted); text-align: center; font-size: 11px; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 50; transform: translateY(12px); border: 1px solid #2c3b4a; border-radius: 8px; background: #17212c; padding: 11px 15px; color: #dce5ed; font-size: 11px; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
+    .toast.visible { transform: translateY(0); opacity: 1; }
+    .search-clear { display: none; flex: none; border: 0; background: transparent; padding: 0 2px; color: var(--muted); font-size: 15px; line-height: 1; cursor: pointer; }
+    .search-clear.visible { display: block; }
+    .filters-inline, .page-size-control { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; }
+    .filter-select, .page-size-select, .form-control {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      background: #111821;
+      padding: 7px 9px;
+      color: #cbd5df;
+      font-size: 10px;
+    }
+    .filter-select:focus, .page-size-select:focus, .form-control:focus { border-color: #3a8069; }
+    .table-footer-left { display: flex; align-items: center; gap: 16px; }
+    .route-view { min-height: 400px; }
+    .route-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .route-heading h1 { font-size: 25px; }
+    .route-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+    .route-toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+    .route-panel { overflow: hidden; }
+    .route-empty { padding: 35px 20px; color: var(--muted); text-align: center; font-size: 12px; }
+    .route-table { min-width: 760px; }
+    .status-select { max-width: 140px; border: 1px solid var(--border); border-radius: 5px; background: #111821; padding: 5px 7px; color: #b8c3d0; font-size: 10px; }
+    .action-button { border: 1px solid #2e3b4a; border-radius: 6px; background: #141d27; padding: 6px 9px; color: #cbd5df; font-size: 10px; cursor: pointer; }
+    .action-button:hover { border-color: #476074; background: #1b2632; }
+    .action-button.danger { border-color: rgba(255,101,119,.24); color: #ff8491; }
+    .primary-button { border-color: rgba(57,214,160,.25); background: rgba(57,214,160,.1); color: #79e3bc; }
+    .primary-button:hover { background: rgba(57,214,160,.17); }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 13px; }
+    .form-field { display: grid; gap: 6px; color: #a8b4c2; font-size: 10px; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-control { width: 100%; padding: 9px 10px; font-size: 12px; }
+    .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .dialog {
+      width: min(460px, calc(100vw - 28px));
+      border: 1px solid #2c3948;
+      border-radius: 10px;
+      background: #111821;
+      padding: 22px;
+      color: var(--text);
+      box-shadow: 0 20px 70px rgba(0,0,0,.5);
+    }
+    .dialog::backdrop { background: rgba(3,6,10,.72); backdrop-filter: blur(3px); }
+    .dialog h2 { margin: 0 0 16px; font-size: 17px; }
+    .dialog-copy { margin: -7px 0 15px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .auth-screen { display: grid; min-height: 100vh; place-items: center; padding: 24px; background: radial-gradient(ellipse at 50% 20%, rgba(57,214,160,.08), transparent 55%), var(--bg); }
+    .auth-card { width: min(420px, 100%); border: 1px solid var(--border); border-radius: 12px; background: var(--panel); padding: 29px; }
+    .auth-card h1 { margin-top: 22px; font-size: 23px; }
+    .auth-card > p { margin: 8px 0 22px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .auth-card form { display: grid; gap: 13px; }
+    .auth-card .primary-button { width: 100%; padding: 10px; }
+    .auth-message { min-height: 16px; color: #ff8491; font-size: 10px; }
+    .auth-toggle { display: block; margin: 16px auto 0; border: 0; background: none; color: #79e3bc; font-size: 11px; cursor: pointer; }
+    .toast.error { border-color: rgba(255,101,119,.35); color: #ff9aa5; }
+
+    @media (max-width: 1150px) {
+      .sidebar { width: 220px; }
+      .main { margin-left: 220px; }
+      .topbar { padding-right: 25px; padding-left: 25px; }
+      .content { padding-right: 25px; padding-left: 25px; }
+      .metric-grid { gap: 10px; }
+      .metric-card { padding-right: 13px; padding-left: 13px; }
+      .dashboard-grid { grid-template-columns: minmax(0, 1.5fr) minmax(240px, .9fr); }
+    }
+    @media (max-width: 900px) {
+      .sidebar { width: 68px; padding-right: 10px; padding-left: 10px; }
+      .brand { justify-content: center; padding-right: 0; padding-left: 0; }
+      .brand-name, .workspace-label, .workspace, .nav-label, .nav-link span, .nav-count, .sidebar-status span, .profile-copy { display: none; }
+      .nav-link { justify-content: center; padding: 0; }
+      .nav-link svg { width: 18px; height: 18px; }
+      .sidebar-status { justify-content: center; padding: 12px 0; }
+      .profile { justify-content: center; padding-right: 0; padding-left: 0; }
+      .main { margin-left: 68px; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .sidebar { position: fixed; width: 248px; transform: translateX(-100%); transition: transform .2s ease; }
+      .sidebar.open { transform: translateX(0); box-shadow: 18px 0 45px rgba(0, 0, 0, .38); }
+      .brand { justify-content: flex-start; padding-right: 10px; padding-left: 10px; }
+      .brand-name, .workspace-label, .workspace, .nav-label, .nav-link span, .sidebar-status span, .profile-copy { display: initial; }
+      .workspace { display: flex; }
+      .nav-label { display: block; }
+      .nav-link { justify-content: flex-start; padding: 0 11px; }
+      .nav-link span { display: inline; }
+      .nav-count { display: inline-block; }
+      .sidebar-status { justify-content: flex-start; padding: 11px; }
+      .profile { justify-content: flex-start; padding-right: 6px; padding-left: 6px; }
+      .main { margin-left: 0; }
+      .topbar { height: 58px; padding: 0 15px; }
+      .mobile-menu { display: grid; margin-right: 9px; }
+      .breadcrumbs { margin-right: auto; }
+      .breadcrumbs .crumb-muted { display: none; }
+      .top-actions { gap: 8px; }
+      .search { width: 34px; height: 34px; justify-content: center; padding: 0; }
+      .search input { display: none; }
+      .search:focus-within { position: absolute; right: 95px; left: 55px; width: auto; justify-content: flex-start; padding: 7px 10px; }
+      .search:focus-within input { display: block; }
+      .content { padding: 23px 15px 30px; }
+      .page-heading { align-items: flex-start; flex-direction: column; margin-bottom: 20px; }
+      .heading-actions { width: 100%; }
+      .date-range { flex: 1; }
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+      .metric-card { min-height: 127px; padding: 13px; }
+      .metric-value { font-size: 24px; }
+      .dashboard-grid { margin-top: 12px; }
+      .panel-header { padding-right: 12px; padding-left: 12px; }
+      .chart-legend { display: none; }
+      .chart-area { padding-right: 9px; padding-left: 7px; }
+      .chart-svg { height: 165px; }
+      .events-panel { margin-top: 12px; }
+      .events-header { align-items: flex-start; }
+      .events-tools .filter-label { display: none; }
+      .events-tools { gap: 8px; }
+      .route-heading { align-items: flex-start; flex-direction: column; }
+      .route-toolbar { align-items: flex-start; flex-direction: column; }
+      .table-footer-left { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .page-size-control { font-size: 9px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-field.full { grid-column: auto; }
+      th, td { padding-right: 11px; padding-left: 11px; }
+      .table-footer { padding-right: 11px; padding-left: 11px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#/dashboard" aria-label="MiniSIEM dashboard">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3 19 6v5c0 4.7-2.9 8-7 10-4.1-2-7-5.3-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="brand-name">Mini<span>SIEM</span></span>
+      </a>
+
+      <div class="workspace-label">Workspace</div>
+      <div class="workspace">
+        <span class="workspace-name"><span class="workspace-dot"></span><span id="workspaceName">MiniSIEM</span></span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m8 10 4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="nav-label">Security operations</div>
+      <nav class="nav-list" aria-label="Security operations">
+        <a class="nav-link active" href="#/dashboard" data-page="dashboard" aria-current="page">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-link" href="#/events" data-page="events">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 21 19H3l9-15.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 9v4m0 3h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>Security Events</span>
+        </a>
+        <a class="nav-link" href="#/alerts" data-page="alerts">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Zm-8 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Alerts</span>          <span class="nav-count" hidden>0</span>
+        </a>
+        <a class="nav-link" href="#/users" data-page="users">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20m7-9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm6-7.5a4 4 0 0 1 0 7.7m2 3.3a4 4 0 0 1 3 3.9V20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Users</span>
+        </a>
+        <a class="nav-link" href="#/logs" data-page="logs">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5.5h14m-14 4h14m-14 4h8m-8 4h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span>Logs</span>
+        </a>
+        <a class="nav-link" href="#/settings" id="settingsLink" data-page="settings">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="currentColor" stroke-width="1.6"/><path d="m19.4 13.5 1.1.9-1.5 2.6-1.4-.5a7.5 7.5 0 0 1-1.7 1l-.2 1.5h-3l-.2-1.5a7.5 7.5 0 0 1-1.7-1l-1.4.5-1.5-2.6 1.1-.9a7.4 7.4 0 0 1 0-2l-1.1-.9 1.5-2.6 1.4.5a7.5 7.5 0 0 1 1.7-1l.2-1.5h3l.2 1.5a7.5 7.5 0 0 1 1.7 1l1.4-.5 1.5 2.6-1.1.9a7.4 7.4 0 0 1 0 2Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/></svg>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="sidebar-status"><span class="status-pulse"></span><span id="systemStatus">Checking system status</span></div>
+        <div class="profile">
+          <div class="avatar" aria-hidden="true">JD</div>
+          <div class="profile-copy"><div class="profile-name">Signed out</div><div class="profile-role">MiniSIEM user</div></div>
+          <svg style="margin-left:auto;color:#718094" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 18 6-6-6-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main" id="dashboard">
+      <header class="topbar">
+        <div style="display:flex;align-items:center">
+          <button class="mobile-menu" id="mobileMenu" type="button" aria-label="Open navigation" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </button>
+          <div class="breadcrumbs"><span class="crumb-muted">Workspace</span><span class="crumb-muted">/</span><strong>Security overview</strong></div>
+        </div>
+        <div class="top-actions">
+          <label class="search" aria-label="Search events">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <input id="eventSearch" type="search" placeholder="Search events..." autocomplete="off">
+            <button class="search-clear" id="clearSearch" type="button" aria-label="Clear search">×</button>
+          </label>
+          <button class="icon-button" id="refreshButton" type="button" aria-label="Refresh dashboard" title="Refresh dashboard">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 7v5h-5M4.6 9a7.5 7.5 0 0 1 13-2L20 12m-16 5v-5h5m10.4 3a7.5 7.5 0 0 1-13 2L4 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="notification-wrap">
+            <button class="icon-button" id="notificationButton" type="button" aria-label="Notifications">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Zm-8 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <span class="notification-dot" aria-hidden="true"></span>
+          </div>
+          <button class="icon-button" id="logoutButton" type="button" aria-label="Sign out" title="Sign out" hidden>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 17l5-5-5-5m5 5H3m9-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div id="dashboardView">
+        <section class="page-heading" aria-labelledby="pageTitle">
+          <div>
+            <div class="eyebrow">Security operations center</div>
+            <h1 id="pageTitle">Security overview</h1>
+            <p class="subtitle">Monitor your security posture and investigate threats across your environment.</p>
+          </div>
+          <div class="heading-actions">
+            <div class="date-range" aria-label="Selected date range">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M7.5 3.5v3m9-3v3M4 9.5h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <span>Last 24 hours</span>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m8 10 4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <button class="button-secondary" id="exportButton" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Export
+            </button>
+          </div>
+        </section>
+
+        <div class="overview-strip">
+          <span class="status-pulse" aria-hidden="true"></span>
+          <strong id="monitoringStatus">Connecting to security data</strong>
+          <span class="dot-separator">•</span>
+          <span>Last updated <time id="lastUpdated">just now</time></span>
+        </div>
+
+        <section class="metric-grid" aria-label="Security metrics">
+          <article class="metric-card">
+            <div class="metric-top">
+              <span class="metric-label">Security events</span>
+              <span class="metric-icon green"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 17.5 9 12l3.5 3.5L20 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7H20v4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="metric-value" id="metricEvents">0</div>
+            <div class="metric-foot"><span class="trend neutral">Last 24 hours</span><span>from recorded events</span></div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-top">
+              <span class="metric-label">Critical threats</span>
+              <span class="metric-icon red"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 21 19H3l9-16Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 9v4m0 3h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            </div>
+            <div class="metric-value" id="metricThreats">0</div>
+            <div class="metric-foot"><span class="trend neutral">Unresolved</span><span>critical alerts</span></div>
+          </article>
+          <article class="metric-card" id="users">
+            <div class="metric-top">
+              <span class="metric-label">Active users</span>
+              <span class="metric-icon blue"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20m7-9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm6-7.5a4 4 0 0 1 0 7.7m2 3.3a4 4 0 0 1 3 3.9V20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+            </div>
+            <div class="metric-value" id="metricUsers">0</div>
+            <div class="metric-foot"><span class="trend neutral">Last 24 hours</span><span>successful sign-ins</span></div>
+          </article>
+          <article class="metric-card">
+            <div class="metric-top">
+              <span class="metric-label">Open security events</span>
+              <span class="metric-icon amber"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+            <div class="metric-value" id="metricOpen">0</div>
+            <div class="metric-foot"><span class="trend neutral">Current</span><span>awaiting review</span></div>
+          </article>
+        </section>
+
+        <section class="dashboard-grid" aria-label="Event activity and alerts">
+          <article class="panel" aria-labelledby="activityTitle">
+            <header class="panel-header">
+              <div>
+                <div class="panel-title" id="activityTitle"><span class="live-dot" aria-hidden="true"></span>Event activity</div>
+                <div class="panel-subtitle">Security events over time</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="chart-legend" aria-label="Chart legend">
+                  <span class="legend-item"><span class="legend-swatch"></span>Events</span>
+                  <span class="legend-item"><span class="legend-swatch blue"></span>Threats</span>
+                </div>
+                <div class="chart-range" role="group" aria-label="Chart time range">
+                  <button class="range-button" type="button" data-range="1h">1H</button>
+                  <button class="range-button" type="button" data-range="6h">6H</button>
+                  <button class="range-button selected" type="button" data-range="24h" aria-pressed="true">24H</button>
+                  <button class="range-button" type="button" data-range="7d">7D</button>
+                </div>
+              </div>
+            </header>
+            <div class="chart-area">
+              <div class="chart-tooltip" id="chartTooltip" role="status"></div>
+              <svg class="chart-svg" id="activityChart" viewBox="0 0 700 190" preserveAspectRatio="none" role="img" aria-label="Line chart showing security event and threat activity over the last 24 hours">
+                <defs>
+                  <linearGradient id="eventsFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#39d6a0" stop-opacity=".17"/><stop offset="100%" stop-color="#39d6a0" stop-opacity="0"/></linearGradient>
+                  <linearGradient id="threatsFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#69aaff" stop-opacity=".1"/><stop offset="100%" stop-color="#69aaff" stop-opacity="0"/></linearGradient>
+                </defs>
+                <g stroke="#202b38" stroke-width="1">
+                  <line x1="48" y1="16" x2="690" y2="16"/><line x1="48" y1="53" x2="690" y2="53"/>
+                  <line x1="48" y1="90" x2="690" y2="90"/><line x1="48" y1="127" x2="690" y2="127"/>
+                  <line x1="48" y1="164" x2="690" y2="164"/>
+                </g>
+                <g fill="#69788b" font-size="9" font-family="inherit">
+                  <text x="4" y="19">1.2k</text><text x="10" y="56">900</text><text x="10" y="93">600</text>
+                  <text x="10" y="130">300</text><text x="22" y="167">0</text>
+                  <text x="48" y="184">—</text><text x="205" y="184">—</text><text x="363" y="184">—</text>
+                  <text x="520" y="184">—</text><text x="670" y="184">—</text>
+                </g>
+                <path id="eventsArea" d="" fill="url(#eventsFill)"/>
+                <path id="threatsArea" d="" fill="url(#threatsFill)"/>
+                <path id="eventsLine" d="" fill="none" stroke="#39d6a0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path id="threatsLine" d="" fill="none" stroke="#69aaff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4"/>
+                <g id="chartPoints" fill="#39d6a0" stroke="#10161f" stroke-width="2"></g>
+              </svg>
+            </div>
+            <footer class="chart-footer"><span>Peak activity <strong id="chartPeak">0 events</strong></span><span>Chart reflects recorded security events</span></footer>
+          </article>
+
+          <article class="panel" id="alerts" aria-labelledby="alertsTitle">
+            <header class="panel-header">
+              <div>
+                <div class="panel-title" id="alertsTitle">Priority alerts</div>
+                <div class="panel-subtitle">Threats requiring attention</div>
+              </div>
+              <a class="panel-link" href="#/alerts">View all
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </header>
+            <div class="alerts-list" id="priorityAlerts"><div class="route-empty">No priority alerts recorded.</div></div>
+          </article>
+        </section>
+
+        <section class="panel events-panel" id="events" aria-labelledby="eventsTitle">
+          <header class="panel-header events-header">
+            <div>
+              <div class="panel-title" id="eventsTitle">Recent security events</div>
+              <div class="panel-subtitle">Latest activity detected across your environment</div>
+            </div>
+            <div class="events-tools">
+              <span class="filters-inline">
+                <select class="filter-select" id="dashboardSeverity" aria-label="Filter event severity">
+                  <option value="">All severities</option><option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option>
+                </select>
+                <select class="filter-select" id="dashboardHours" aria-label="Filter event time">
+                  <option value="1">Last hour</option><option value="6">Last 6 hours</option><option value="24" selected>Last 24 hours</option><option value="168">Last 7 days</option>
+                </select>
+              </span>
+              <a class="panel-link" href="#/events" id="allEventsLink">View all events
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+          </header>
+          <div class="table-scroll">
+            <table id="logs">
+              <thead><tr><th>Time</th><th>Event</th><th>Severity</th><th>Source</th><th>Destination</th><th>Status</th></tr></thead>
+              <tbody id="eventsBody"></tbody>
+            </table>
+            <div class="no-results" id="noResults">No events match your search.</div>
+          </div>
+          <footer class="table-footer">
+            <div class="table-footer-left">
+              <span id="eventCount">Loading events…</span>
+              <label class="page-size-control">Rows
+                <select class="page-size-select" id="dashboardPageSize" aria-label="Rows per page"><option>10</option><option>25</option><option>50</option><option>100</option></select>
+              </label>
+            </div>
+            <div class="pagination" aria-label="Event pages">
+              <div id="dashboardPagination" style="display:flex;align-items:center;gap:4px"></div>
+            </div>
+          </footer>
+        </section>
+        </div>
+        <section class="route-view" id="routeView" hidden aria-live="polite">
+          <div class="route-heading"><div><div class="eyebrow">Security operations center</div><h1 id="routeTitle"></h1><p class="subtitle" id="routeSubtitle"></p></div><div id="routeActions"></div></div>
+          <div class="route-toolbar" id="routeToolbar"></div>
+          <div class="panel route-panel" id="routePanel"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog class="dialog" id="detailDialog"><h2 id="detailTitle"></h2><p class="dialog-copy" id="detailCopy"></p><div id="detailContent"></div><div class="form-actions"><button class="action-button" type="button" id="closeDialog">Close</button></div></dialog>
+  <dialog class="dialog" id="userDialog"><h2>Add user</h2><form id="userForm">
+    <div class="form-grid">
+      <label class="form-field">Username<input class="form-control" name="username" minlength="3" maxlength="50" required></label>
+      <label class="form-field">Email<input class="form-control" name="email" type="email" maxlength="254" required></label>
+      <label class="form-field">Temporary password<input class="form-control" name="password" type="password" minlength="8" maxlength="72" required></label>
+      <label class="form-field">Role<select class="form-control" name="role"><option value="USER">User</option><option value="ADMIN">Administrator</option></select></label>
+    </div><div class="auth-message" id="userFormMessage"></div>
+    <div class="form-actions"><button class="action-button" type="button" data-close-dialog>Cancel</button><button class="action-button primary-button" type="submit">Create user</button></div>
+  </form></dialog>
+  <div class="auth-screen" id="authScreen" hidden>
+    <section class="auth-card">
+      <a class="brand" href="#/dashboard"><span class="brand-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3 19 6v5c0 4.7-2.9 8-7 10-4.1-2-7-5.3-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="brand-name">Mini<span>SIEM</span></span></a>
+      <h1 id="authTitle">Welcome back</h1><p id="authDescription">Sign in to your security operations workspace.</p>
+      <form id="authForm">
+        <label class="form-field">Username or email<input class="form-control" name="usernameOrEmail" autocomplete="username" required></label>
+        <label class="form-field" id="authEmailField" hidden>Email<input class="form-control" name="email" type="email" autocomplete="email"></label>
+        <label class="form-field" id="authTokenField" hidden>One-time administrator bootstrap token<input class="form-control" name="token" type="password" autocomplete="off"></label>
+        <label class="form-field">Password<input class="form-control" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="72" required></label>
+        <div class="auth-message" id="authMessage"></div>
+        <button class="action-button primary-button" id="authSubmit" type="submit">Sign in</button>
+      </form>
+      <button class="auth-toggle" id="authToggle" type="button">Create an account</button>
+      <button class="auth-toggle" id="bootstrapToggle" type="button">Set up first administrator</button>
+    </section>
+  </div>
+</body>
+</html>
